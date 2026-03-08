@@ -37,27 +37,27 @@ public class PostsController {
     @GetMapping
     public List<PostDTO> getAll(@RequestParam(name = "term", required = false) String term){
         if(term != null){
-            return postsService.getAllByTerm(term).stream().map(this::convertToPostDTO).collect(Collectors.toList());
+            return postsService.getAllByTerm(term);
         }
-        return postsService.getAll().stream().map(this::convertToPostDTO).collect(Collectors.toList());
+        return postsService.getAll();
     }
 
     @GetMapping("/{id}")
     public PostDTO getOne(@PathVariable int id){
-        return convertToPostDTO(postsService.getOne(id));
+        return postsService.getOne(id);
     }
 
     @PostMapping
     public ResponseEntity<PostDTO> createPost(@RequestBody @Valid PostDTO postDTO, BindingResult bindingResult){
         getAllFieldErrors(bindingResult);
-        postsService.createPost(convertToPost(postDTO));
+        postsService.createPost(postDTO);
         return new ResponseEntity<>(postDTO, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<PostDTO> updatePost(@PathVariable int id, @RequestBody @Valid PostDTO postDTO, BindingResult bindingResult){
         getAllFieldErrors(bindingResult);
-        postsService.updatePost(id, convertToPost(postDTO));
+        postsService.updatePost(id, postDTO);
         return new ResponseEntity<>(postDTO, HttpStatus.OK);
     }
 
@@ -65,32 +65,6 @@ public class PostsController {
     public ResponseEntity<HttpStatus> deletePost(@PathVariable int id){
         postsService.deletePost(id);
         return ResponseEntity.ok(HttpStatus.NO_CONTENT);
-    }
-
-
-    private PostDTO convertToPostDTO(Post post){
-        PostDTO postDTO = modelMapper.map(post, PostDTO.class);
-
-        postDTO.setTags(
-                post.getTags()
-                        .stream()
-                        .map(Tag::getName)
-                        .collect(Collectors.toList())
-        );
-        return postDTO;
-    }
-
-    private Post convertToPost(PostDTO postDTO){
-        Post post = modelMapper.map(postDTO, Post.class);
-
-        post.setTags(
-                postDTO.getTags()
-                        .stream()
-                        .map(tagService::findOrCreate)
-                        .toList()
-        );
-
-        return post;
     }
 
     private void getAllFieldErrors(BindingResult bindingResult) {
