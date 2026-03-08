@@ -9,6 +9,8 @@ import java.util.List;
 
 public class PostDTO {
 
+    private int id;
+
     @NotEmpty(message = "Title can't be empty")
     @Size(max = 100, message = "Title can be max 100 symbols")
     private String title;
@@ -23,6 +25,14 @@ public class PostDTO {
 
     public PostDTO(){
         this.tags = new ArrayList<>();
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTitle() {

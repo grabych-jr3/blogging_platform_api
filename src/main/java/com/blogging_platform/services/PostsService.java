@@ -7,6 +7,10 @@ import com.blogging_platform.repositories.PostsRepository;
 import com.blogging_platform.util.PostNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +49,7 @@ public class PostsService {
                 .toList();
     }
 
+    @Cacheable(value = "posts", key = "#id")
     public PostDTO getOne(int id){
         Post post = postsRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("Post with id " + id + " not found!"));
@@ -52,25 +57,38 @@ public class PostsService {
         return convertToPostDTO(post);
     }
 
+    @CachePut(value = "posts", key = "#result.id")
     @Transactional
-    public void createPost(PostDTO postDTO){
-        postsRepository.save(enrichPost(convertToPost(postDTO)));
+    public PostDTO createPost(PostDTO postDTO){
+        Post saved = postsRepository.save(
+                enrichPost(convertToPost(postDTO))
+        );
+
+        return convertToPostDTO(saved);
     }
 
+    @CachePut(value = "posts", key = "#id")
     @Transactional
-    public void updatePost(int id, PostDTO postDTO){
+    public PostDTO updatePost(int id, PostDTO postDTO){
         Post existingPost = postsRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("Post with id " + id + " not found"));
 
-        Post post = convertToPost(postDTO);
+        existingPost.setTitle(postDTO.getTitle());
+        existingPost.setContent(postDTO.getContent());
+        existingPost.setCategory(postDTO.getCategory());
 
-        existingPost.setTitle(post.getTitle());
-        existingPost.setContent(post.getContent());
-        existingPost.setCategory(post.getCategory());
-        existingPost.setTags(post.getTags());
+        existingPost.setTags(
+                postDTO.getTags()
+                        .stream()
+                        .map(tagService::findOrCreate)
+                        .toList()
+        );
+
         existingPost.setUpdatedAt(Instant.now());
+        return convertToPostDTO(existingPost);
     }
 
+    @CacheEvict(value = "posts", key = "#id")
     @Transactional
     public void deletePost(int id){
         Post post = postsRepository.findById(id)
