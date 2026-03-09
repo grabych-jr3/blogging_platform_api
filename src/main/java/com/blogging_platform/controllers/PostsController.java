@@ -24,47 +24,42 @@ import java.util.stream.Collectors;
 public class PostsController {
 
     private final PostsService postsService;
-    private final TagService tagService;
-    private final ModelMapper modelMapper;
 
     @Autowired
     public PostsController(PostsService postsService, TagService tagService, ModelMapper modelMapper) {
         this.postsService = postsService;
-        this.tagService = tagService;
-        this.modelMapper = modelMapper;
     }
 
     @GetMapping
-    public List<PostDTO> getAll(@RequestParam(name = "term", required = false) String term){
+    public ResponseEntity<List<Post>> getAll(@RequestParam(name = "term", required = false) String term){
+        HttpStatus status = HttpStatus.OK;
         if(term != null){
-            return postsService.getAllByTerm(term);
+            return new ResponseEntity<>(postsService.getAllByTerm(term), status);
         }
-        return postsService.getAll();
+        return new ResponseEntity<>(postsService.getAll(), status);
     }
 
     @GetMapping("/{id}")
-    public PostDTO getOne(@PathVariable int id){
+    public Post getOne(@PathVariable int id){
         return postsService.getOne(id);
     }
 
     @PostMapping
-    public ResponseEntity<PostDTO> createPost(@RequestBody @Valid PostDTO postDTO, BindingResult bindingResult){
+    public ResponseEntity<Post> createPost(@RequestBody @Valid PostDTO postDTO, BindingResult bindingResult){
         getAllFieldErrors(bindingResult);
-        postsService.createPost(postDTO);
-        return new ResponseEntity<>(postDTO, HttpStatus.CREATED);
+        return new ResponseEntity<>(postsService.createPost(postDTO), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PostDTO> updatePost(@PathVariable int id, @RequestBody @Valid PostDTO postDTO, BindingResult bindingResult){
+    public ResponseEntity<Post> updatePost(@PathVariable int id, @RequestBody @Valid PostDTO postDTO, BindingResult bindingResult){
         getAllFieldErrors(bindingResult);
-        postsService.updatePost(id, postDTO);
-        return new ResponseEntity<>(postDTO, HttpStatus.OK);
+        return new ResponseEntity<>(postsService.updatePost(id, postDTO), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deletePost(@PathVariable int id){
         postsService.deletePost(id);
-        return ResponseEntity.ok(HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
 
     private void getAllFieldErrors(BindingResult bindingResult) {

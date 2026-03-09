@@ -30,7 +30,7 @@ public class BloggingPlatformApplication {
                 .entryTtl(Duration.ofMinutes(60))
                 .disableCachingNullValues()
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new JacksonJsonRedisSerializer<>(PostDTO.class)));
+                        .fromSerializer(new JacksonJsonRedisSerializer<>(Post.class)));
 
         return RedisCacheManager
                 .builder(connectionFactory)

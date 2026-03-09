@@ -33,43 +33,29 @@ public class PostsService {
         this.tagService = tagService;
     }
 
-    public List<PostDTO> getAll(){
-        List<Post> posts = postsRepository.findAll();
-
-        return posts.stream()
-                .map(this::convertToPostDTO)
-                .toList();
+    public List<Post> getAll(){
+        return postsRepository.findAll();
     }
 
-    public List<PostDTO> getAllByTerm(String term){
-        List<Post> posts = postsRepository.getPostsHavingTerm(term);
-
-        return posts.stream()
-                .map(this::convertToPostDTO)
-                .toList();
+    public List<Post> getAllByTerm(String term){
+        return postsRepository.getPostsHavingTerm(term);
     }
 
     @Cacheable(value = "posts", key = "#id")
-    public PostDTO getOne(int id){
-        Post post = postsRepository.findById(id)
+    public Post getOne(int id){
+        return postsRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("Post with id " + id + " not found!"));
-
-        return convertToPostDTO(post);
     }
 
     @CachePut(value = "posts", key = "#result.id")
     @Transactional
-    public PostDTO createPost(PostDTO postDTO){
-        Post saved = postsRepository.save(
-                enrichPost(convertToPost(postDTO))
-        );
-
-        return convertToPostDTO(saved);
+    public Post createPost(PostDTO postDTO){
+        return postsRepository.save(enrichPost(convertToPost(postDTO)));
     }
 
     @CachePut(value = "posts", key = "#id")
     @Transactional
-    public PostDTO updatePost(int id, PostDTO postDTO){
+    public Post updatePost(int id, PostDTO postDTO){
         Post existingPost = postsRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("Post with id " + id + " not found"));
 
@@ -85,7 +71,7 @@ public class PostsService {
         );
 
         existingPost.setUpdatedAt(Instant.now());
-        return convertToPostDTO(existingPost);
+        return existingPost;
     }
 
     @CacheEvict(value = "posts", key = "#id")
